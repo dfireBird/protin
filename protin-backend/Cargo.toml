@@ -9,4 +9,6 @@ edition = "2021"
 actix-web = "4.2.1"
 diesel = { version = "2.0.0", features = ["postgres", "r2d2"] }
 dotenvy = "0.15.6"
+env_logger = "0.10.0"
+log = "0.4.17"
 rust-s3 = "0.32.3"
