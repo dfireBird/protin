@@ -8,6 +8,9 @@ use diesel::{
 use log::info;
 use s3::{creds::Credentials, Bucket};
 
+mod models;
+mod schema;
+
 type DbPool = Pool<ConnectionManager<PgConnection>>;
 
 #[derive(Clone, Debug)]
