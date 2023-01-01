@@ -1,6 +1,7 @@
 use std::{env, io};
 
 use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use anyhow::Context;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
@@ -24,12 +25,11 @@ async fn hello_world() -> impl Responder {
     HttpResponse::Ok().body("Hello World")
 }
 
-#[actix_web::main]
-pub async fn start_protin() -> io::Result<()> {
+pub fn start_protin() -> anyhow::Result<()> {
     let manager = ConnectionManager::new(get_database_url());
     let pool = Pool::builder()
         .build(manager)
-        .expect("Can't create a db connection pool");
+        .context("Can't create a db connection pool")?;
     info!("Connection Pool is created");
 
     let bucket = Bucket::new(
@@ -40,9 +40,15 @@ pub async fn start_protin() -> io::Result<()> {
         },
         Credentials::default().expect("Invalid Credentials"),
     )
-    .expect("Can't create a bucket object.");
+    .context("Can't create a bucket object.")?;
     info!("R2 Bucket is created");
 
+    create_server(pool, bucket).context("Web server can't be created.")?;
+    Ok(())
+}
+
+#[actix_web::main]
+async fn create_server(pool: DbPool, bucket: Bucket) -> io::Result<()> {
     let app_state = AppState { pool, bucket };
     HttpServer::new(move || {
         App::new()
