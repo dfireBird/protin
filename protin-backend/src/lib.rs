@@ -26,7 +26,7 @@ async fn hello_world() -> impl Responder {
 }
 
 pub fn start_protin() -> anyhow::Result<()> {
-    let manager = ConnectionManager::new(get_database_url());
+    let manager = ConnectionManager::new(get_database_url()?);
     let pool = Pool::builder()
         .build(manager)
         .context("Can't create a db connection pool")?;
@@ -36,12 +36,12 @@ pub fn start_protin() -> anyhow::Result<()> {
         "protin-files",
         s3::Region::R2 {
             account_id: env::var("R2_ACCOUNT_ID")
-                .expect("R2_ACCOUNT_ID environment variable must be set."),
+                .context("R2_ACCOUNT_ID environment variable must be set.")?,
         },
-        Credentials::default().expect("Invalid Credentials"),
+        Credentials::default().context("Invalid Credentials")?,
     )
     .context("Can't create a bucket object.")?;
-    info!("R2 Bucket is created");
+    info!("R2 Bucket object is created");
 
     create_server(pool, bucket).context("Web server can't be created.")?;
     Ok(())
@@ -61,19 +61,20 @@ async fn create_server(pool: DbPool, bucket: Bucket) -> io::Result<()> {
     .await
 }
 
-fn get_database_url() -> String {
+fn get_database_url() -> anyhow::Result<String> {
     if let Ok(url) = env::var("DATABASE_URL") {
-        url
+        Ok(url)
     } else {
-        let user = env::var("POSTGRES_USER")
-            .expect("POSTGRES_USER environment variable must be set if DATABASE_URL is not set.");
-        let password = env::var("POSTGRES_PASSWORD").expect(
+        let user = env::var("POSTGRES_USER").context(
+            "POSTGRES_USER environment variable must be set if DATABASE_URL is not set.",
+        )?;
+        let password = env::var("POSTGRES_PASSWORD").context(
             "POSTGRES_PASSWORD environment variable must be set if DATABASE_URL is not set.",
-        );
+        )?;
         let db = env::var("POSTGRES_DB")
-            .expect("POSTGRES_DB environment variable must be set if DATABASE_URL is not set.");
+            .context("POSTGRES_DB environment variable must be set if DATABASE_URL is not set.")?;
         let host = env::var("POSTGRES_HOST").unwrap_or("localhost".to_string());
 
-        format!("postgres://{user}:{password}:{host}/{db}")
+        Ok(format!("postgres://{user}:{password}:{host}/{db}"))
     }
 }
