@@ -7,8 +7,9 @@ use diesel::{
     PgConnection,
 };
 use log::info;
-use s3::{creds::Credentials, Bucket};
+use s3::Bucket;
 
+mod bucket;
 mod models;
 mod schema;
 
@@ -32,15 +33,7 @@ pub fn start_protin() -> anyhow::Result<()> {
         .context("Can't create a db connection pool")?;
     info!("Connection Pool is created");
 
-    let bucket = Bucket::new(
-        "protin-files",
-        s3::Region::R2 {
-            account_id: env::var("R2_ACCOUNT_ID")
-                .context("R2_ACCOUNT_ID environment variable must be set.")?,
-        },
-        Credentials::default().context("Invalid Credentials")?,
-    )
-    .context("Can't create a bucket object.")?;
+    let bucket = bucket::create_bucket()?;
     info!("R2 Bucket object is created");
 
     create_server(pool, bucket).context("Web server can't be created.")?;
