@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 #[derive(Queryable)]
 pub struct Paste {
-    pub id: Uuid,
-    pub file: String,
+    pub file_path: Uuid,
+    pub id: String,
     pub created_at: SystemTime,
     pub expires_at: SystemTime,
 }

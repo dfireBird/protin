@@ -2,8 +2,8 @@
 
 diesel::table! {
     pastes (id) {
-        id -> Uuid,
-        file -> Text,
+        file_path -> Uuid,
+        id -> Text,
         created_at -> Timestamp,
         expires_at -> Timestamp,
     }
