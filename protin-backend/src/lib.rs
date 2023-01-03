@@ -11,12 +11,13 @@ use s3::Bucket;
 
 mod bucket;
 mod models;
+mod paste;
 mod schema;
 
 type DbPool = Pool<ConnectionManager<PgConnection>>;
 
 #[derive(Clone, Debug)]
-struct AppState {
+pub struct AppState {
     pool: DbPool,
     bucket: Bucket,
 }
