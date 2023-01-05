@@ -1,11 +1,12 @@
 use std::time::SystemTime;
 
 use diesel::prelude::*;
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::schema::pastes;
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize)]
 pub struct Paste {
     pub file_path: Uuid,
     pub id: String,

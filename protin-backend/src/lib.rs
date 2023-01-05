@@ -12,6 +12,7 @@ use s3::Bucket;
 mod bucket;
 mod models;
 mod paste;
+mod routes;
 mod schema;
 
 type DbPool = Pool<ConnectionManager<PgConnection>>;
@@ -48,6 +49,7 @@ async fn create_server(pool: DbPool, bucket: Bucket) -> io::Result<()> {
         App::new()
             .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
+            .configure(routes::pastes_config)
             .service(hello_world)
     })
     .bind(("0.0.0.0", 8080))?

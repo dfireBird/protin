@@ -13,7 +13,10 @@ const KEY_SPACE: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 /// create a random file name
 /// put the file data with file name into bucket
 /// add an entry
-pub async fn create_paste(app_data: AppState, file_data: &[u8]) -> anyhow::Result<Paste> {
+pub async fn create_paste(
+    app_data: web::Data<AppState>,
+    file_data: &[u8],
+) -> anyhow::Result<Paste> {
     let key = generate_key(KEY_LENGTH);
     let file_path = uuid::Uuid::new_v4();
     bucket::put_file(&app_data.bucket, &file_path.to_string(), file_data).await?;
