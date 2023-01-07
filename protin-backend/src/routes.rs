@@ -4,8 +4,8 @@ use actix_web::{
     web::{self, ServiceConfig},
     Error, HttpResponse,
 };
-use futures_util::TryStreamExt;
 use log::error;
+use tokio_stream::StreamExt;
 
 use crate::{paste, AppState};
 
