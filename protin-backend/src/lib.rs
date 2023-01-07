@@ -36,7 +36,7 @@ pub fn start_protin() -> anyhow::Result<()> {
     info!("Connection Pool is created");
 
     let bucket = bucket::create_bucket()?;
-    info!("R2 Bucket object is created");
+    info!("S3 Bucket object is created");
 
     create_server(pool, bucket).context("Web server can't be created.")?;
     Ok(())

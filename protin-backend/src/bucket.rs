@@ -6,9 +6,10 @@ use s3::{creds::Credentials, Bucket};
 pub fn create_bucket() -> anyhow::Result<Bucket> {
     Bucket::new(
         "protin-files",
-        s3::Region::R2 {
-            account_id: env::var("R2_ACCOUNT_ID")
-                .context("R2_ACCOUNT_ID environment variable must be set.")?,
+        s3::Region::Custom {
+            region: env::var("S3_REGION").context("S3_REGION environment variable must be set.")?,
+            endpoint: env::var("S3_ENDPOINT")
+                .context("S3_ENDPOINT environment variable must be set.")?,
         },
         Credentials::default().context("Invalid Credentials")?,
     )
