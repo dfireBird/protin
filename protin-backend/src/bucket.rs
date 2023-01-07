@@ -1,10 +1,10 @@
 use std::env;
 
 use anyhow::{anyhow, Context, Result};
-use s3::{creds::Credentials, Bucket};
+use s3::{creds::Credentials, Bucket, BucketConfiguration};
 
-pub fn create_bucket() -> anyhow::Result<Bucket> {
-    Bucket::new(
+pub async fn create_bucket() -> anyhow::Result<Bucket> {
+    let response = Bucket::create(
         "protin-files",
         s3::Region::Custom {
             region: env::var("S3_REGION").context("S3_REGION environment variable must be set.")?,
@@ -12,8 +12,23 @@ pub fn create_bucket() -> anyhow::Result<Bucket> {
                 .context("S3_ENDPOINT environment variable must be set.")?,
         },
         Credentials::default().context("Invalid Credentials")?,
+        BucketConfiguration::default(),
     )
-    .context("Can't create a bucket object.")
+    .await;
+    match response {
+        Ok(ok_resp) => Ok(ok_resp.bucket),
+        Err(_) => Ok(Bucket::new(
+            "protin-files",
+            s3::Region::Custom {
+                region: env::var("S3_REGION")
+                    .context("S3_REGION environment variable must be set.")?,
+                endpoint: env::var("S3_ENDPOINT")
+                    .context("S3_ENDPOINT environment variable must be set.")?,
+            },
+            Credentials::default().context("Invalid Credentials")?,
+        )
+        .context("Can't instantiate the bucket object.")?),
+    }
 }
 
 pub async fn put_file(bucket: &Bucket, file_path: &str, file_data: &[u8]) -> Result<()> {

@@ -28,21 +28,23 @@ async fn hello_world() -> impl Responder {
     HttpResponse::Ok().body("Hello World")
 }
 
-pub fn start_protin() -> anyhow::Result<()> {
+#[tokio::main]
+pub async fn start_protin() -> anyhow::Result<()> {
     let manager = ConnectionManager::new(get_database_url()?);
     let pool = Pool::builder()
         .build(manager)
         .context("Can't create a db connection pool")?;
     info!("Connection Pool is created");
 
-    let bucket = bucket::create_bucket()?;
+    let bucket = bucket::create_bucket().await?;
     info!("S3 Bucket object is created");
 
-    create_server(pool, bucket).context("Web server can't be created.")?;
+    create_server(pool, bucket)
+        .await
+        .context("Web server can't be created.")?;
     Ok(())
 }
 
-#[actix_web::main]
 async fn create_server(pool: DbPool, bucket: Bucket) -> io::Result<()> {
     let app_state = AppState { pool, bucket };
     HttpServer::new(move || {
