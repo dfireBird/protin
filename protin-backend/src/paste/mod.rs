@@ -4,7 +4,7 @@ use actix_web::web;
 use anyhow::Context;
 use rand::seq::IteratorRandom;
 
-use crate::{bucket, models::Paste, AppState};
+use crate::{models::Paste, s3, AppState};
 
 const KEY_LENGTH: u32 = 10;
 
@@ -19,7 +19,7 @@ pub async fn create_paste(
 ) -> anyhow::Result<Paste> {
     let key = generate_key(KEY_LENGTH);
     let file_path = uuid::Uuid::new_v4();
-    bucket::put_file(
+    s3::put_file(
         &app_data.s3_client,
         &file_path.to_string(),
         file_data.to_vec(),

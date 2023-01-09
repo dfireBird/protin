@@ -4,17 +4,17 @@ use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Res
 use anyhow::Context;
 use log::info;
 
-mod bucket;
 mod db;
 mod models;
 mod paste;
 mod routes;
+mod s3;
 mod schema;
 
 #[derive(Clone, Debug)]
 pub struct AppState {
     pool: db::DbPool,
-    s3_client: bucket::Client,
+    s3_client: s3::Client,
 }
 
 #[get("/")]
@@ -27,7 +27,7 @@ pub async fn start_protin() -> anyhow::Result<()> {
     let pool = db::create_db_pool()?;
     info!("Connection Pool is created");
 
-    let client = bucket::create_client().await?;
+    let client = s3::create_client().await?;
     info!("S3 Client is created");
 
     create_server(pool, client)
@@ -36,7 +36,7 @@ pub async fn start_protin() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn create_server(pool: db::DbPool, s3_client: bucket::Client) -> io::Result<()> {
+async fn create_server(pool: db::DbPool, s3_client: s3::Client) -> io::Result<()> {
     let app_state = AppState { pool, s3_client };
     HttpServer::new(move || {
         App::new()
