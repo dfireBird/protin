@@ -19,7 +19,12 @@ pub async fn create_paste(
 ) -> anyhow::Result<Paste> {
     let key = generate_key(KEY_LENGTH);
     let file_path = uuid::Uuid::new_v4();
-    bucket::put_file(&app_data.bucket, &file_path.to_string(), file_data).await?;
+    bucket::put_file(
+        &app_data.s3_client,
+        &file_path.to_string(),
+        file_data.to_vec(),
+    )
+    .await?;
     web::block(move || {
         let mut conn = app_data
             .pool

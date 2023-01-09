@@ -3,7 +3,6 @@ use std::io;
 use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Context;
 use log::info;
-use s3::Bucket;
 
 mod bucket;
 mod db;
@@ -15,7 +14,7 @@ mod schema;
 #[derive(Clone, Debug)]
 pub struct AppState {
     pool: db::DbPool,
-    bucket: Bucket,
+    s3_client: bucket::Client,
 }
 
 #[get("/")]
@@ -28,17 +27,17 @@ pub async fn start_protin() -> anyhow::Result<()> {
     let pool = db::create_db_pool()?;
     info!("Connection Pool is created");
 
-    let bucket = bucket::create_bucket().await?;
-    info!("S3 Bucket object is created");
+    let client = bucket::create_client().await?;
+    info!("S3 Client is created");
 
-    create_server(pool, bucket)
+    create_server(pool, client)
         .await
         .context("Web server can't be created.")?;
     Ok(())
 }
 
-async fn create_server(pool: db::DbPool, bucket: Bucket) -> io::Result<()> {
-    let app_state = AppState { pool, bucket };
+async fn create_server(pool: db::DbPool, s3_client: bucket::Client) -> io::Result<()> {
+    let app_state = AppState { pool, s3_client };
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(app_state.clone()))
