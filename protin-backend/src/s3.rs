@@ -2,11 +2,20 @@ use std::env;
 
 use anyhow::Context;
 use aws_config;
-use aws_sdk_s3::{config, types::ByteStream, Endpoint, Region};
+use aws_sdk_s3::{
+    config,
+    model::{
+        BucketLifecycleConfiguration, ExpirationStatus, LifecycleExpiration, LifecycleRule,
+        LifecycleRuleFilter,
+    },
+    types::ByteStream,
+    Endpoint, Region,
+};
 
 pub use aws_sdk_s3::Client;
 
 const S3_BUCKET_NAME: &str = "protin-files";
+const S3_BUCKET_LIFECYCLE_ID: &str = "protin-files-expiration-lifecycle";
 
 pub async fn create_client() -> anyhow::Result<Client> {
     let env_config = aws_config::load_from_env().await;
@@ -23,6 +32,7 @@ pub async fn create_client() -> anyhow::Result<Client> {
         .build();
     let client = Client::from_conf(config);
     create_bucket_if_not_exists(&client).await?;
+    create_lifecycle_if_not_exists(&client).await?;
     Ok(client)
 }
 
@@ -52,6 +62,7 @@ async fn create_bucket_if_not_exists(client: &Client) -> anyhow::Result<()> {
         .send()
         .await
         .context(format!("Can't create the bucket {}", S3_BUCKET_NAME))?;
+
     Ok(())
 }
 
@@ -87,4 +98,48 @@ pub async fn get_file(client: &Client, file_path: &str) -> anyhow::Result<Vec<u8
         .await
         .context("Error while collecting the ByteStream")?
         .to_vec())
+}
+
+async fn create_lifecycle_if_not_exists(client: &Client) -> anyhow::Result<()> {
+    let resp = client
+        .get_bucket_lifecycle_configuration()
+        .bucket(S3_BUCKET_NAME)
+        .send()
+        .await
+        .context("Error in list buckets lifecycle configuration request. ")?;
+    let rules = resp.rules();
+
+    // check if rule with id is present
+    if let Some(rules_slice) = rules {
+        let is_rule_listed = rules_slice
+            .iter()
+            .map(|r| r.id().unwrap_or(""))
+            .any(|id| id == S3_BUCKET_LIFECYCLE_ID);
+        if is_rule_listed {
+            return Ok(());
+        }
+    }
+    //if not create lifecycle rule
+    let bucket_lifecycle_rule = BucketLifecycleConfiguration::builder()
+        .rules(
+            LifecycleRule::builder()
+                .status(ExpirationStatus::Enabled)
+                .filter(LifecycleRuleFilter::Prefix("".to_string()))
+                .id(S3_BUCKET_LIFECYCLE_ID)
+                .expiration(LifecycleExpiration::builder().days(1).build())
+                .build(),
+        )
+        .build();
+
+    client
+        .put_bucket_lifecycle_configuration()
+        .bucket(S3_BUCKET_NAME)
+        .lifecycle_configuration(bucket_lifecycle_rule)
+        .send()
+        .await
+        .context(format!(
+            "Can't set lifecycle rules for the bucket: {}",
+            S3_BUCKET_NAME
+        ))?;
+    Ok(())
 }
