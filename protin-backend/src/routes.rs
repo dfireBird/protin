@@ -1,6 +1,6 @@
 use actix_multipart::Multipart;
 use actix_web::{
-    post,
+    get, post,
     web::{self, ServiceConfig},
     Error, HttpResponse,
 };
@@ -10,7 +10,26 @@ use tokio_stream::StreamExt;
 use crate::{paste, AppState};
 
 pub fn pastes_config(cfg: &mut ServiceConfig) {
+    cfg.service(get_paste_route);
     cfg.service(create_paste_route);
+}
+
+#[get("/paste/{paste_id}")]
+async fn get_paste_route(
+    data: web::Data<AppState>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, Error> {
+    let paste_id = path.into_inner();
+    match paste::get_paste(data, paste_id).await {
+        Ok(data) => match data {
+            Some(data) => Ok(HttpResponse::Ok().body(data)),
+            None => Ok(HttpResponse::NotFound().body("Paste not found.")),
+        },
+        Err(err) => {
+            error!("Error: {:#}", err);
+            Ok(HttpResponse::InternalServerError().body(format!("{err}")))
+        }
+    }
 }
 
 #[post("/paste")]

@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::schema::pastes;
 
-#[derive(Queryable, Serialize)]
+#[derive(Clone, Debug, Queryable, Serialize)]
 pub struct Paste {
     pub file_path: Uuid,
     pub id: String,
@@ -14,7 +14,7 @@ pub struct Paste {
     pub expires_at: SystemTime,
 }
 
-#[derive(Insertable)]
+#[derive(Debug, Insertable)]
 #[diesel(table_name = pastes)]
 pub struct NewPaste {
     pub id: String,

@@ -35,6 +35,29 @@ pub async fn create_paste(
     .await?
 }
 
+pub async fn get_paste(
+    app_data: web::Data<AppState>,
+    id: String,
+) -> anyhow::Result<Option<Vec<u8>>> {
+    let data = app_data.clone();
+    let paste = web::block(move || {
+        let mut conn = app_data
+            .pool
+            .get()
+            .context("Couldn't get a database connection from pool")?;
+        db::get_paste(&mut conn, id)
+    })
+    .await??;
+
+    if let Some(paste) = paste {
+        s3::get_file(&data.s3_client, &paste.file_path.to_string())
+            .await
+            .map(Some)
+    } else {
+        Ok(None)
+    }
+}
+
 fn generate_key(key_length: u32) -> String {
     let mut key = String::new();
 
