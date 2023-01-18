@@ -44,7 +44,6 @@ async fn create_bucket_if_not_exists(client: &Client) -> anyhow::Result<()> {
         .context("List buckets request can't be sent")?;
     let buckets = bucket_resp.buckets();
 
-    // check if bucket is there
     if let Some(buckets_slice) = buckets {
         let is_bucket_listed = buckets_slice
             .iter()
@@ -55,7 +54,6 @@ async fn create_bucket_if_not_exists(client: &Client) -> anyhow::Result<()> {
         }
     }
 
-    // if not create the bucket
     client
         .create_bucket()
         .bucket(S3_BUCKET_NAME)
@@ -109,7 +107,6 @@ async fn create_lifecycle_if_not_exists(client: &Client) -> anyhow::Result<()> {
         .context("Error in list buckets lifecycle configuration request. ")?;
     let rules = resp.rules();
 
-    // check if rule with id is present
     if let Some(rules_slice) = rules {
         let is_rule_listed = rules_slice
             .iter()
@@ -119,7 +116,6 @@ async fn create_lifecycle_if_not_exists(client: &Client) -> anyhow::Result<()> {
             return Ok(());
         }
     }
-    //if not create lifecycle rule
     let bucket_lifecycle_rule = BucketLifecycleConfiguration::builder()
         .rules(
             LifecycleRule::builder()

@@ -17,11 +17,6 @@ pub struct AppState {
     s3_client: s3::Client,
 }
 
-#[get("/")]
-async fn hello_world() -> impl Responder {
-    HttpResponse::Ok().body("Hello World")
-}
-
 #[tokio::main]
 pub async fn start_protin() -> anyhow::Result<()> {
     let pool = db::create_db_pool()?;
@@ -43,7 +38,6 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client) -> io::Result<()
             .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
             .configure(routes::pastes_config)
-            .service(hello_world)
     })
     .bind(("0.0.0.0", 8080))?
     .run()
