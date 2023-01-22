@@ -21,6 +21,7 @@ pub async fn create_paste(
     let file_path = uuid::Uuid::new_v4();
     s3::put_file(
         &app_data.s3_client,
+        &app_data.s3_bucket_name,
         &file_path.to_string(),
         file_data.to_vec(),
     )
@@ -50,9 +51,13 @@ pub async fn get_paste(
     .await??;
 
     if let Some(paste) = paste {
-        s3::get_file(&data.s3_client, &paste.file_path.to_string())
-            .await
-            .map(Some)
+        s3::get_file(
+            &data.s3_client,
+            &data.s3_bucket_name,
+            &paste.file_path.to_string(),
+        )
+        .await
+        .map(Some)
     } else {
         Ok(None)
     }

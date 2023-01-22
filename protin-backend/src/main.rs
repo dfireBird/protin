@@ -3,7 +3,10 @@ use std::env;
 use anyhow::Context;
 use dotenvy;
 
-fn main() -> anyhow::Result<()> {
+use protin::config::Config;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     dotenvy::from_path(env::var("ENV_FILE").unwrap_or("../.env".to_string()))
         .context(".env file not found.")?;
 
@@ -12,5 +15,7 @@ fn main() -> anyhow::Result<()> {
     }
     env_logger::init();
 
-    protin::start_protin()
+    let config = Config::from_env()?;
+
+    protin::start_protin(config).await
 }
