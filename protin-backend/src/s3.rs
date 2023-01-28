@@ -7,7 +7,7 @@ use aws_sdk_s3::{
         LifecycleRuleFilter,
     },
     types::ByteStream,
-    Endpoint, Region,
+    Region,
 };
 
 pub use aws_sdk_s3::Client;
@@ -18,9 +18,8 @@ pub async fn create_client(app_config: &Config) -> anyhow::Result<Client> {
     let env_config = aws_config::load_from_env().await;
     let config = config::Builder::from(&env_config)
         .region(Region::new(app_config.s3_region()))
-        .endpoint_resolver(
-            Endpoint::immutable(app_config.s3_endpoint()).context("Invalid Enpoint resolver.")?,
-        )
+        .endpoint_url(app_config.s3_endpoint())
+        .force_path_style(true)
         .build();
     let client = Client::from_conf(config);
     create_bucket_if_not_exists(&client, &app_config).await?;
