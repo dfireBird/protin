@@ -10,12 +10,14 @@ pub struct Config {
     s3_bucket_name: String,
     s3_bucket_lifcycle_id: String,
     s3_bucket_expiration: i32,
+    s3_file_size_limit: usize,
     web_port: u16,
 }
 
 const DEFAULT_S3_BUCKET_NAME: &str = "protin-files";
 const DEFAULT_S3_BUCKET_LIFECYCLE_ID: &str = "protin-files-expiration-lifecycle";
 const DEFAULT_S3_BUCKET_EXPIRATION: u32 = 1;
+const DEFAULT_S3_FILE_SIZE_LIMIT: usize = 5 * 1024 * 1024;
 const DEFAULT_WEB_PORT: u32 = 8080;
 
 impl Config {
@@ -53,6 +55,12 @@ impl Config {
             .parse()
             .context("S3_BUCKET_EXPIRATION needs to be signed integer value")?;
 
+        let s3_file_size_limit_string =
+            env::var("S3_FILE_SIZE_LIMIT").unwrap_or(DEFAULT_S3_FILE_SIZE_LIMIT.to_string());
+        let s3_file_size_limit = s3_file_size_limit_string
+            .parse()
+            .context("S3_FILE_SIZE_LIMIT needs to be signed integer value")?;
+
         let web_port_string = env::var("WEB_PORT").unwrap_or(DEFAULT_WEB_PORT.to_string());
         let web_port = web_port_string
             .parse()
@@ -65,6 +73,7 @@ impl Config {
             s3_bucket_name,
             s3_bucket_lifcycle_id,
             s3_bucket_expiration,
+            s3_file_size_limit,
             web_port,
         })
     }
@@ -91,6 +100,10 @@ impl Config {
 
     pub fn s3_bucket_expiration(&self) -> i32 {
         self.s3_bucket_expiration
+    }
+
+    pub fn s3_file_size_limit(&self) -> usize {
+        self.s3_file_size_limit
     }
 
     pub fn web_port(&self) -> u16 {

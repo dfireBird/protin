@@ -1,5 +1,6 @@
 use std::io;
 
+use actix_easy_multipart::MultipartFormConfig;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use anyhow::Context;
 use log::info;
@@ -35,6 +36,7 @@ pub async fn start_protin(config: Config) -> anyhow::Result<()> {
 }
 
 async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config) -> io::Result<()> {
+    let file_size_limit = config.s3_file_size_limit();
     let app_state = AppState {
         pool,
         s3_client,
@@ -42,6 +44,7 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config)
     };
     HttpServer::new(move || {
         App::new()
+            .app_data(MultipartFormConfig::default().total_limit(file_size_limit))
             .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
             .configure(routes::pastes_config)
