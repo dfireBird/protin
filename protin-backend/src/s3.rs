@@ -90,7 +90,7 @@ pub async fn get_file(
         .send()
         .await
         .context(format!(
-            "Can't put object in the bucket: {}",
+            "Can't get object in the bucket: {}",
             s3_bucket_name
         ))?;
     Ok(resp
@@ -110,7 +110,10 @@ async fn create_lifecycle_if_not_exists(
         .bucket(app_config.s3_bucket_name())
         .send()
         .await
-        .context("Error in list buckets lifecycle configuration request. ")?;
+        .context(format!(
+            "List buckets lifecycle configuration request for bucket: {}.",
+            app_config.s3_bucket_name()
+        ))?;
     let rules = resp.rules();
 
     if let Some(rules_slice) = rules {

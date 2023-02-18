@@ -47,7 +47,7 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config)
             .app_data(MultipartFormConfig::default().total_limit(file_size_limit))
             .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
-            .configure(routes::pastes_config)
+            .service(web::scope("/api").configure(routes::pastes_config))
     })
     .bind(("0.0.0.0", config.web_port()))?
     .run()
