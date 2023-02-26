@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, net::Ipv6Addr};
 
 use actix_easy_multipart::MultipartFormConfig;
 use actix_web::{middleware::Logger, web, App, HttpServer};
@@ -49,7 +49,7 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config)
             .wrap(Logger::default())
             .service(web::scope("/api").configure(routes::pastes_config))
     })
-    .bind(("0.0.0.0", config.web_port()))?
+    .bind((Ipv6Addr::UNSPECIFIED, config.web_port()))?
     .run()
     .await
 }
