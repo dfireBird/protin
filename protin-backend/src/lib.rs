@@ -1,5 +1,6 @@
 use std::{io, net::Ipv6Addr};
 
+use actix_cors::Cors;
 use actix_easy_multipart::MultipartFormConfig;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use anyhow::Context;
@@ -43,10 +44,16 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config)
         s3_bucket_name: config.s3_bucket_name(),
     };
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allowed_methods(vec!["GET"])
+            .allow_any_header();
+
         App::new()
             .app_data(MultipartFormConfig::default().total_limit(file_size_limit))
             .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
+            .wrap(cors)
             .service(web::scope("/api").configure(routes::pastes_config))
     })
     .bind((Ipv6Addr::UNSPECIFIED, config.web_port()))?
