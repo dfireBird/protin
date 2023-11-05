@@ -6,9 +6,9 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use anyhow::Context;
 use log::info;
 
-use crate::config::Config;
+pub use crate::config::Config;
 
-pub mod config;
+mod config;
 mod db;
 mod models;
 mod paste;

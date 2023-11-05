@@ -3,7 +3,7 @@ use std::env;
 use anyhow::Context;
 use dotenvy;
 
-use protin::config::Config;
+use protin::Config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
