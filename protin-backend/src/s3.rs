@@ -1,13 +1,12 @@
 use anyhow::Context;
-use aws_config;
+use aws_config::{self, BehaviorVersion, Region};
 use aws_sdk_s3::{
     config,
-    model::{
+    primitives::ByteStream,
+    types::{
         BucketLifecycleConfiguration, ExpirationStatus, LifecycleExpiration, LifecycleRule,
         LifecycleRuleFilter,
     },
-    types::ByteStream,
-    Region,
 };
 
 pub use aws_sdk_s3::Client;
@@ -15,10 +14,12 @@ pub use aws_sdk_s3::Client;
 use crate::config::Config;
 
 pub async fn create_client(app_config: &Config) -> anyhow::Result<Client> {
-    let env_config = aws_config::load_from_env().await;
-    let config = config::Builder::from(&env_config)
+    let env_config = aws_config::defaults(BehaviorVersion::latest())
         .region(Region::new(app_config.s3_region()))
         .endpoint_url(app_config.s3_endpoint())
+        .load()
+        .await;
+    let config = config::Builder::from(&env_config)
         .force_path_style(true)
         .build();
     let client = Client::from_conf(config);
@@ -35,8 +36,8 @@ async fn create_bucket_if_not_exists(client: &Client, app_config: &Config) -> an
         .context("List buckets request can't be sent")?;
     let buckets = bucket_resp.buckets();
 
-    if let Some(buckets_slice) = buckets {
-        let is_bucket_listed = buckets_slice
+    if !buckets.is_empty() {
+        let is_bucket_listed = buckets
             .iter()
             .map(|b| b.name().unwrap_or(""))
             .any(|n| n == app_config.s3_bucket_name());
@@ -109,15 +110,12 @@ async fn create_lifecycle_if_not_exists(
         .get_bucket_lifecycle_configuration()
         .bucket(app_config.s3_bucket_name())
         .send()
-        .await
-        .context(format!(
-            "List buckets lifecycle configuration request for bucket: {}.",
-            app_config.s3_bucket_name()
-        ))?;
-    let rules = resp.rules();
+        .await;
+    // NOTE: MinIO returns an error if there are no lifecycle present, so handling it as no rules
+    let rules = resp.map(|r| r.rules).unwrap_or_default();
 
-    if let Some(rules_slice) = rules {
-        let is_rule_listed = rules_slice
+    if let Some(rules) = rules {
+        let is_rule_listed = rules
             .iter()
             .map(|r| r.id().unwrap_or(""))
             .any(|id| id == app_config.s3_bucket_lifcycle_id());
@@ -136,9 +134,14 @@ async fn create_lifecycle_if_not_exists(
                         .days(app_config.s3_bucket_expiration())
                         .build(),
                 )
-                .build(),
+                .build()
+                .context(format!("Can't build lifecycle rule"))?,
         )
-        .build();
+        .build()
+        .context(format!(
+            "Can't build Bucket Lifecycle Configuration: {}",
+            app_config.s3_bucket_name()
+        ))?;
 
     client
         .put_bucket_lifecycle_configuration()
