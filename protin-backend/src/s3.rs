@@ -127,7 +127,7 @@ async fn create_lifecycle_if_not_exists(
         .rules(
             LifecycleRule::builder()
                 .status(ExpirationStatus::Enabled)
-                .filter(LifecycleRuleFilter::Prefix("".to_string()))
+                .filter(LifecycleRuleFilter::builder().prefix("").build())
                 .id(app_config.s3_bucket_lifcycle_id())
                 .expiration(
                     LifecycleExpiration::builder()

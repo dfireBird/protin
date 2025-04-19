@@ -22,9 +22,9 @@ paths:
       requestBody:
         content:
           multipart/form-data: # Media type
-            schema:            # Request payload
+            schema: # Request payload
               type: object
-              properties:      # Request parts
+              properties: # Request parts
                 file:
                   type: string
                   format: binary
@@ -33,12 +33,14 @@ paths:
                 contentType: text/plain
         required: true
       responses:
-        '200':
+        "200":
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Paste'
+                $ref: "#/components/schemas/Paste"
+        "404":
+          description: Multipart form data sent is either incomplete or does not have the required field
   /paste/{pasteId}:
     get:
       tags:
@@ -54,16 +56,16 @@ paths:
             type: integer
             format: int64
       responses:
-        '200':
+        "200":
           description: successful operation
           content:
             text/plain:
               schema:
                 type: string
                 example: A test paste
-        '400':
+        "400":
           description: Invalid ID supplied
-        '404':
+        "404":
           description: Paste not found
 components:
   schemas:

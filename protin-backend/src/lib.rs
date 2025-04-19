@@ -46,7 +46,7 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config)
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
-            .allowed_methods(vec!["GET"])
+            .allowed_methods(vec!["GET", "POST"])
             .allow_any_header();
 
         App::new()

@@ -11,7 +11,15 @@ async fn main() -> anyhow::Result<()> {
         .context(".env file not found.")?;
 
     if env::var("RUST_LOG").ok().is_none() {
-        env::set_var("RUST_LOG", "protin=debug,actix_web=info");
+        unsafe {
+            /*
+             * The function is unsafe only on multi-threaded programs on OS other than Windows.
+             * Tho this the web server is multi-threaded program, at this point the threads are
+             * spawned yet. So I think it's mostly safe to use.
+             */
+            // FIXME: find a different way to do this
+            env::set_var("RUST_LOG", "protin=debug,actix_web=info");
+        }
     }
     env_logger::init();
 

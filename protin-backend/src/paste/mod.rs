@@ -66,7 +66,7 @@ pub async fn get_paste(
 fn generate_key(key_length: u32) -> String {
     let mut key = String::new();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for _ in 0..key_length {
         let rand_char = KEY_SPACE
             .chars()
