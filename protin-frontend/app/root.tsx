@@ -34,8 +34,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <NavBar pageType="new" />
-        {children}
+        <div className="flex flex-col h-screen">
+          <div className="flex-initial">
+            <NavBar pageType="new" />
+          </div>
+          <div className="flex-auto">{children}</div>
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>
