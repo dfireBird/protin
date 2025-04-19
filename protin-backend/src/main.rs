@@ -1,7 +1,6 @@
 use std::env;
 
 use anyhow::Context;
-use dotenvy;
 use env_logger::Env;
 
 use protin::Config;

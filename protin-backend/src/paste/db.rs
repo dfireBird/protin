@@ -31,7 +31,7 @@ pub fn get_paste(conn: &mut PgConnection, rid: String) -> anyhow::Result<Option<
 
     pastes.sort_by(|a, b| b.expires_at.cmp(&a.expires_at));
 
-    let latest_paste = pastes.get(0);
+    let latest_paste = pastes.first();
     if let Some(paste) = latest_paste {
         Ok(Some(paste.clone()))
     } else {

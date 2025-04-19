@@ -49,10 +49,10 @@ async fn create_paste_route(
     }
 
     match paste::create_paste(data.clone(), &file_data).await {
-        Ok(paste) => return Ok(HttpResponse::Ok().json(paste)),
+        Ok(paste) => Ok(HttpResponse::Ok().json(paste)),
         Err(err) => {
             error!("Error: {:#}", err);
-            return Ok(HttpResponse::InternalServerError().body(format!("{}", err)));
+            Ok(HttpResponse::InternalServerError().body(format!("{}", err)))
         }
     }
 }

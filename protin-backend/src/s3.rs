@@ -23,7 +23,7 @@ pub async fn create_client(app_config: &Config) -> anyhow::Result<Client> {
         .force_path_style(true)
         .build();
     let client = Client::from_conf(config);
-    create_bucket_if_not_exists(&client, &app_config).await?;
+    create_bucket_if_not_exists(&client, app_config).await?;
     create_lifecycle_if_not_exists(&client, app_config).await?;
     Ok(client)
 }
@@ -135,7 +135,7 @@ async fn create_lifecycle_if_not_exists(
                         .build(),
                 )
                 .build()
-                .context(format!("Can't build lifecycle rule"))?,
+                .context("Can't build lifecycle rule".to_string())?,
         )
         .build()
         .context(format!(
