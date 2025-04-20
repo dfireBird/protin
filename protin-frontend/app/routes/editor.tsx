@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 import { useToolbar } from "~/providers/toolbar";
 
 import type React from "react";
 import type { Route } from "./+types/editor";
+
+type NewPasteRespone = {
+  id: string;
+  // has more but no use for us
+};
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,20 +18,44 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Editor() {
+export function loader() {
+  const url = process.env.API_URL || "";
+  return { url };
+}
+
+export default function Editor({ loaderData: { url } }: Route.ComponentProps) {
   const textArea = useRef<HTMLTextAreaElement>(null);
   const [content, setContent] = useState("");
   const [selectionStart, setSelectionStart] = useState(0);
 
   const { setToolbarState } = useToolbar();
 
-  const onClickToolbar = useCallback(() => {
-    console.log(content);
-  }, []);
+  const navigate = useNavigate();
+
+  const onClickToolbar = useCallback(async () => {
+    const formData = new FormData();
+    formData.set("file", new Blob([content], { type: "text/plain" }));
+
+    const resp = await fetch(`${url}/api/paste`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (resp.ok) {
+      const data = (await resp.json()) as NewPasteRespone;
+      if (data.id) {
+        await navigate(`/${data.id}`);
+      } else {
+        // fixme: handle error in data recieved
+      }
+    } else {
+      // fixme: handle errors
+    }
+  }, [content]);
 
   useEffect(() => {
     setToolbarState({ state: "save", action: onClickToolbar });
-  }, []);
+  }, [onClickToolbar]);
 
   const insertSpaceOnTab = (
     event: React.KeyboardEvent<HTMLTextAreaElement>,
