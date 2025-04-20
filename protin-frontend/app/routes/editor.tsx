@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useToolbar } from "~/providers/toolbar";
 
 import type React from "react";
 import type { Route } from "./+types/editor";
@@ -14,6 +16,16 @@ export default function Editor() {
   const textArea = useRef<HTMLTextAreaElement>(null);
   const [content, setContent] = useState("");
   const [selectionStart, setSelectionStart] = useState(0);
+
+  const { setToolbarState } = useToolbar();
+
+  const onClickToolbar = useCallback(() => {
+    console.log(content);
+  }, []);
+
+  useEffect(() => {
+    setToolbarState({ state: "save", action: onClickToolbar });
+  }, []);
 
   const insertSpaceOnTab = (
     event: React.KeyboardEvent<HTMLTextAreaElement>,

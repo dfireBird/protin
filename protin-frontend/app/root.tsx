@@ -8,8 +8,10 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { Header } from "./components/header";
+import { ToolbarProvider } from "./providers/toolbar";
+
 import "./app.css";
-import { NavBar } from "./components/navbar";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -34,12 +36,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <div className="flex flex-col h-screen">
-          <div className="flex-initial">
-            <NavBar pageType="new" />
+        <ToolbarProvider>
+          <div className="flex flex-col h-screen">
+            <div className="flex-initial">
+              <Header />
+            </div>
+            <div className="flex-auto">{children}</div>
           </div>
-          <div className="flex-auto">{children}</div>
-        </div>
+        </ToolbarProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
