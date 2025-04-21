@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
+import { LineNum } from "~/components/linenum";
 import { useToolbar } from "~/providers/toolbar";
 
 import type { Route } from "./+types/paste";
-import { useEffect } from "react";
 
 export async function loader({ params: { pasteId } }: Route.LoaderArgs) {
   const url = process.env.API_URL || "";
@@ -37,7 +38,7 @@ export default function Paste({ loaderData }: Route.ComponentProps) {
   return (
     <div className="h-full flex">
       <div className="line h-full p-2 pb-0 border-r-1 border-border/10 text-md font-medium">
-        {">"}
+        <LineNum content={content ?? ""} />
       </div>
       <pre className="font-mono h-full p-2 pb-0 flex-auto text-md font-medium">
         <code>{content}</code>
