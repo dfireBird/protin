@@ -19,12 +19,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export function loader() {
-  const url = process.env.API_URL || "";
-  return { url };
-}
-
-export default function Editor({ loaderData: { url } }: Route.ComponentProps) {
+export default function Editor({}: Route.ComponentProps) {
   const textArea = useRef<HTMLTextAreaElement>(null);
   const [content, setContent] = useState("");
   const [selectionStart, setSelectionStart] = useState(0);
@@ -37,7 +32,7 @@ export default function Editor({ loaderData: { url } }: Route.ComponentProps) {
     const formData = new FormData();
     formData.set("file", new Blob([content], { type: "text/plain" }));
 
-    const resp = await fetch(`${url}/api/paste`, {
+    const resp = await fetch("/api/paste", {
       method: "POST",
       body: formData,
     });

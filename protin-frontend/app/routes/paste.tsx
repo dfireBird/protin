@@ -6,9 +6,12 @@ import { useToolbar } from "~/providers/toolbar";
 
 import type { Route } from "./+types/paste";
 
-export async function loader({ params: { pasteId } }: Route.LoaderArgs) {
-  const url = process.env.API_URL || "";
-  const resp = await fetch(`${url}/api/paste/${pasteId}`);
+export async function loader({
+  params: { pasteId },
+  request,
+}: Route.LoaderArgs) {
+  const origin = new URL(request.url).origin;
+  const resp = await fetch(`${origin}/api/paste/${pasteId}`);
   if (resp.ok) {
     const content = await resp.text();
     return { content };
