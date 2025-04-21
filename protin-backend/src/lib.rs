@@ -27,6 +27,14 @@ pub async fn start_protin(config: Config) -> anyhow::Result<()> {
     let pool = db::create_db_pool(&config)?;
     info!("Connection Pool is created");
 
+    {
+        let mut conn = pool
+            .get()
+            .context("Couldn't get a database connection from pool for migrations")?;
+
+        db::run_migrations(&mut conn).context("Couldn't run db migrations")?;
+    }
+
     let client = s3::create_client(&config).await?;
     info!("S3 Client is created");
 
