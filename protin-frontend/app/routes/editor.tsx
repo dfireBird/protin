@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { redirect, useFetcher } from "react-router";
 
 import { useToolbar } from "~/providers/toolbar";
 import { LineNum } from "~/components/linenum";
@@ -19,6 +19,27 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+export async function action({ request }: Route.ActionArgs) {
+  const origin = new URL(request.url).origin;
+  const data = await request.formData();
+  const resp = await fetch(`${origin}/api/paste`, {
+    method: "POST",
+    body: data,
+  });
+
+  if (resp.ok) {
+    const data = (await resp.json()) as NewPasteRespone;
+    if (data.id) {
+      return redirect(`/${data.id}`);
+    } else {
+      // fixme: handle error in data recieved
+    }
+  } else {
+    // fixme: handle errors
+  }
+  return resp.ok;
+}
+
 export default function Editor({}: Route.ComponentProps) {
   const textArea = useRef<HTMLTextAreaElement>(null);
   const [content, setContent] = useState("");
@@ -26,27 +47,10 @@ export default function Editor({}: Route.ComponentProps) {
 
   const { setToolbarState } = useToolbar();
 
-  const navigate = useNavigate();
+  const fetcher = useFetcher();
 
-  const onClickToolbar = useCallback(async () => {
-    const formData = new FormData();
-    formData.set("file", new Blob([content], { type: "text/plain" }));
-
-    const resp = await fetch("/api/paste", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (resp.ok) {
-      const data = (await resp.json()) as NewPasteRespone;
-      if (data.id) {
-        await navigate(`/${data.id}`);
-      } else {
-        // fixme: handle error in data recieved
-      }
-    } else {
-      // fixme: handle errors
-    }
+  const onClickToolbar = useCallback(() => {
+    fetcher.submit({ file: content }, { method: "POST" });
   }, [content]);
 
   useEffect(() => {
