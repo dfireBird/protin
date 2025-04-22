@@ -1,5 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { createContext, useContext, useState } from "react";
 
 type OnClickHandler = React.MouseEventHandler<HTMLButtonElement>;
 type SetToolbarState = React.Dispatch<React.SetStateAction<ToolbarState>>;
@@ -31,10 +30,6 @@ export function useToolbar() {
 export function ToolbarProvider({ children }: { children: React.ReactNode }) {
   const [toolbarState, setToolbarState] = useState<ToolbarState>(LOADING_STATE);
 
-  const location = useLocation();
-  useEffect(() => {
-    setToolbarState(LOADING_STATE);
-  }, [location]);
   return (
     <ToolbarContext.Provider value={{ toolbarState, setToolbarState }}>
       {children}
