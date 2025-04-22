@@ -87,7 +87,7 @@ export default function Editor({}: Route.ComponentProps) {
         <LineNum content={content} />
       </div>
       <textarea
-        className="font-mono h-full p-2 pb-0 flex-auto text-md font-medium focus-visible:outline-none"
+        className="font-mono max-h-full p-2 pb-0 flex-auto text-md font-medium focus-visible:outline-none"
         ref={textArea}
         value={content}
         onKeyDown={insertSpaceOnTab}
