@@ -1,0 +1,84 @@
+services:
+  proxy:
+    image: caddy:latest
+    hostname: caddy
+    restart: unless-stopped
+    networks:
+      - ui
+      - api
+    depends_on:
+      - ui
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:Z,U
+      - caddy_data:/data
+      - caddy_config:/config
+  ui:
+    build:
+      context: "protin-frontend/"
+    hostname: ui
+    networks:
+      - ui
+    depends_on:
+      - api
+    ports:
+      - 3000:3000
+
+  api:
+    build:
+      context: "protin-backend/"
+    hostname: api
+    env_file: .env
+    networks:
+      - api
+    depends_on:
+      db:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+  db:
+    image: docker.io/postgres:latest
+    hostname: db
+    env_file: .env
+    networks:
+      - api
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interaval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  s3:
+    image: quay.io/minio/minio:latest
+    hostname: s3
+    env_file: .env
+    command: server /data
+    networks:
+      - api
+    volumes:
+      - s3:/data:Z,U
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local"]
+      interaval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db:
+  s3:
+
+networks:
+  api:
+  ui:
