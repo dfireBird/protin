@@ -40,7 +40,7 @@ export default function Paste({ loaderData }: Route.ComponentProps) {
   const content = loaderData.content;
   return (
     <main className="flex">
-      <div className="line h-full p-2 pb-0 border-r-1 border-border/10 text-md font-medium">
+      <div className="line max-h-full p-2 pb-0 border-r-1 border-border/10 text-md font-medium">
         <LineNum content={content ?? ""} />
       </div>
       <pre className="font-mono h-full p-2 pb-0 flex-auto text-md font-medium">
