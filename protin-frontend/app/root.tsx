@@ -37,12 +37,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ToolbarProvider>
-          <div className="flex flex-col h-screen">
-            <div className="flex-initial">
-              <Header />
-            </div>
-            <div className="flex-auto">{children}</div>
+          <div className="sticky top-0 z-10 bg-background">
+            <Header />
           </div>
+          {children}
         </ToolbarProvider>
         <ScrollRestoration />
         <Scripts />

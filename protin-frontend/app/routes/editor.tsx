@@ -82,8 +82,8 @@ export default function Editor({}: Route.ComponentProps) {
   }, [selectionStart, textArea]);
 
   return (
-    <div className="h-full flex">
-      <div className="line h-full p-2 pb-0 border-r-1 border-border/10 text-md font-medium">
+    <main className="flex">
+      <div className="line min-h-full p-2 pb-0 border-r-1 border-border/10 text-md font-medium">
         <LineNum content={content} />
       </div>
       <textarea
@@ -93,6 +93,6 @@ export default function Editor({}: Route.ComponentProps) {
         onKeyDown={insertSpaceOnTab}
         onChange={onChange}
       ></textarea>
-    </div>
+    </main>
   );
 }
