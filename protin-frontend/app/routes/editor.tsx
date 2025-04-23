@@ -19,7 +19,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ActionArgs) {
   const origin = new URL(request.url).origin;
   const data = await request.formData();
   const resp = await fetch(`${origin}/api/paste`, {
