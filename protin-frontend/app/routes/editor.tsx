@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { redirect, useFetcher } from "react-router";
+import { redirect, useSubmit } from "react-router";
 
 import { useToolbar } from "~/providers/toolbar";
 import { LineNum } from "~/components/linenum";
@@ -47,10 +47,10 @@ export default function Editor({}: Route.ComponentProps) {
 
   const { setToolbarState } = useToolbar();
 
-  const fetcher = useFetcher();
+  const submit = useSubmit();
 
   const onClickToolbar = useCallback(() => {
-    fetcher.submit({ file: content }, { method: "POST" });
+    submit({ file: content }, { method: "POST" });
   }, [content]);
 
   useEffect(() => {
