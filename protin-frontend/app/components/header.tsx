@@ -18,9 +18,9 @@ export function Header() {
     toolbarState.state !== "loading" ? toolbarState.action : undefined;
 
   return (
-    <nav className="flex items-center justify-between px-2 pb-2 pt-1 text-xl md:px-6 lg:px-8 2xl:px-10 border-b-1 border-border/40">
+    <nav className="flex items-center justify-between p-2 px-10 border-b-1 border-border/40">
       <div>
-        <h1 className="font-medium text-foreground">Protin</h1>
+        <h1 className="text-3xl font-medium text-foreground">Protin</h1>
       </div>
       <div>
         <Button

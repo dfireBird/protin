@@ -138,10 +138,6 @@
   }
 }
 
-main {
-  min-height: calc(100vh - 46.5px);
-}
-
 @theme {
   --font-sans:
     "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",

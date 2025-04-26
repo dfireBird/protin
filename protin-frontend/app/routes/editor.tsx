@@ -83,12 +83,12 @@ export default function Editor({}: Route.ComponentProps) {
   }, [selectionStart, textArea]);
 
   return (
-    <main className="grid grid-cols-[1%_99%] font-mono">
-      <div className="line min-h-full p-2 pb-0 border-r-1 border-border/40 text-md font-medium">
+    <main className="flex-auto flex font-mono">
+      <div className="line min-w-11 p-2 border-r-1 border-border/40 text-md font-medium">
         <LineNum content={content} />
       </div>
       <textarea
-        className="font-mono max-h-full m-2 pb-0 flex-auto text-md font-medium focus-visible:outline-none"
+        className="font-mono m-2 flex-auto text-md font-medium focus-visible:outline-none resize-none"
         ref={textArea}
         value={content}
         onKeyDown={insertSpaceOnTab}
