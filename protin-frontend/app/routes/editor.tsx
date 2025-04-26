@@ -50,6 +50,7 @@ export default function Editor({}: Route.ComponentProps) {
   const submit = useSubmit();
 
   const onClickToolbar = useCallback(() => {
+    setToolbarState({ state: "loading" });
     submit({ file: content }, { method: "POST" });
   }, [content]);
 
@@ -82,16 +83,17 @@ export default function Editor({}: Route.ComponentProps) {
   }, [selectionStart, textArea]);
 
   return (
-    <main className="flex">
-      <div className="line min-h-full p-2 pb-0 border-r-1 border-border/10 text-md font-medium">
+    <main className="grid grid-cols-[1%_99%] font-mono">
+      <div className="line min-h-full p-2 pb-0 border-r-1 border-border/40 text-md font-medium">
         <LineNum content={content} />
       </div>
       <textarea
-        className="font-mono max-h-full p-2 pb-0 flex-auto text-md font-medium focus-visible:outline-none"
+        className="font-mono max-h-full m-2 pb-0 flex-auto text-md font-medium focus-visible:outline-none"
         ref={textArea}
         value={content}
         onKeyDown={insertSpaceOnTab}
         onChange={onChange}
+        autoFocus
       ></textarea>
     </main>
   );
