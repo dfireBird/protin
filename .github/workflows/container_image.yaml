@@ -25,34 +25,42 @@ jobs:
       - name: Checkout Repsitory
         uses: actions/checkout@v4
 
-      - name: Build UI image
-        run: docker build ./protin-frontend --tag $UI_IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
-      - name: Build API image
-        run: docker build ./protin-backend --tag $API_IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Push UI image
+      - name: Prepare version metadata
+        id: meta
         run: |
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$UI_IMAGE_NAME
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
           [ "$VERSION" == "master" ] && VERSION=latest
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-          docker tag $UI_IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
-      - name: Push API image
-        run: |
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$API_IMAGE_NAME
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-          [ "$VERSION" == "master" ] && VERSION=latest
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-          docker tag $API_IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+      - name: Build and push UI image (multi-arch)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./protin-frontend
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.UI_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
+          labels: runnumber=${{ github.run_id }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push API image (multi-arch)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./protin-backend
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.API_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
+          labels: runnumber=${{ github.run_id }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
