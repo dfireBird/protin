@@ -43,13 +43,20 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
+      - name: Prepare image base name
+        id: image_base
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "OWNER=$OWNER" >> $GITHUB_OUTPUT
+          echo "Image owner: $OWNER"
+
       - name: Build and push UI image (multi-arch)
         uses: docker/build-push-action@v5
         with:
           context: ./protin-frontend
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.UI_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
+          tags: ghcr.io/${{ steps.image_base.outputs.OWNER }}/${{ env.UI_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
           labels: runnumber=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -60,7 +67,7 @@ jobs:
           context: ./protin-backend
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.API_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
+          tags: ghcr.io/${{ steps.image_base.outputs.OWNER }}/${{ env.API_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
           labels: runnumber=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
