@@ -1,4 +1,4 @@
-FROM docker.io/rust:latest as builder
+FROM docker.io/rust:trixie as builder
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN cargo install --path .
 
-FROM docker.io/debian:bookworm-slim
+FROM docker.io/debian:trixie-slim
 
 RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
 
