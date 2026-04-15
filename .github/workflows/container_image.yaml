@@ -13,27 +13,15 @@ on:
 env:
   UI_IMAGE_NAME: protin_ui
   API_IMAGE_NAME: protin_api
+  REGISTRY: ghcr.io
 
 jobs:
-  build_push:
+  prepare:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-
+    outputs:
+      version: ${{ steps.meta.outputs.VERSION }}
+      image_owner: ${{ steps.image_base.outputs.OWNER }}
     steps:
-      - name: Checkout Repsitory
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
       - name: Prepare version metadata
         id: meta
         run: |
@@ -50,24 +38,77 @@ jobs:
           echo "OWNER=$OWNER" >> $GITHUB_OUTPUT
           echo "Image owner: $OWNER"
 
-      - name: Build and push UI image (multi-arch)
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push UI image (${{ matrix.arch }})
         uses: docker/build-push-action@v5
         with:
           context: ./protin-frontend
-          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/${{ steps.image_base.outputs.OWNER }}/${{ env.UI_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
+          tags: ${{ env.REGISTRY }}/${{ needs.prepare.outputs.image_owner }}/${{ env.UI_IMAGE_NAME }}:${{ matrix.arch }}-${{ needs.prepare.outputs.version }}
           labels: runnumber=${{ github.run_id }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Build and push API image (multi-arch)
+      - name: Build and push API image (${{ matrix.arch }})
         uses: docker/build-push-action@v5
         with:
           context: ./protin-backend
-          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/${{ steps.image_base.outputs.OWNER }}/${{ env.API_IMAGE_NAME }}:${{ steps.meta.outputs.VERSION }}
+          tags: ${{ env.REGISTRY }}/${{ needs.prepare.outputs.image_owner }}/${{ env.API_IMAGE_NAME }}:${{ matrix.arch }}-${{ needs.prepare.outputs.version }}
           labels: runnumber=${{ github.run_id }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
+  manifest:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push UI multi-arch manifest
+        run: |
+          IMAGE_NAME=${{ env.REGISTRY }}/${{ needs.prepare.outputs.image_owner }}/${{ env.UI_IMAGE_NAME }}
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker manifest create $IMAGE_NAME:$VERSION \
+            --amend $IMAGE_NAME:amd64-$VERSION \
+            --amend $IMAGE_NAME:arm64-$VERSION
+          docker manifest push $IMAGE_NAME:$VERSION
+
+      - name: Create and push API multi-arch manifest
+        run: |
+          IMAGE_NAME=${{ env.REGISTRY }}/${{ needs.prepare.outputs.image_owner }}/${{ env.API_IMAGE_NAME }}
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker manifest create $IMAGE_NAME:$VERSION \
+            --amend $IMAGE_NAME:amd64-$VERSION \
+            --amend $IMAGE_NAME:arm64-$VERSION
+          docker manifest push $IMAGE_NAME:$VERSION
