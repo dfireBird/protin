@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, net::IpAddr};
 
 use anyhow::Context;
 
@@ -11,14 +11,25 @@ pub struct Config {
     s3_bucket_lifcycle_id: String,
     s3_bucket_expiration: i32,
     s3_file_size_limit: usize,
+    s3_total_size_limit: usize,
     web_port: u16,
+
+    reverse_proxy_ip: IpAddr,
+    ip_limit_per_second: u32,
+    global_limit_per_second: u32,
 }
+
+const MIB: usize = 1024 * 1024;
 
 const DEFAULT_S3_BUCKET_NAME: &str = "protin-files";
 const DEFAULT_S3_BUCKET_LIFECYCLE_ID: &str = "protin-files-expiration-lifecycle";
 const DEFAULT_S3_BUCKET_EXPIRATION: u32 = 1;
-const DEFAULT_S3_FILE_SIZE_LIMIT: usize = 5 * 1024 * 1024;
+const DEFAULT_S3_FILE_SIZE_LIMIT: usize = 5 * MIB;
+const DEFAULT_S3_TOTAL_SIZE_LIMIT: usize = 1024 * MIB;
 const DEFAULT_WEB_PORT: u32 = 8080;
+const DEFAULT_REVERSE_PROXY_IP: &str = "0.0.0.0";
+const DEFAULT_IP_LIMIT_PER_SECOND: usize = 10;
+const DEFAULT_GLOBAL_LIMIT_PER_SECOND: usize = 1000;
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
@@ -59,12 +70,36 @@ impl Config {
             env::var("S3_FILE_SIZE_LIMIT").unwrap_or(DEFAULT_S3_FILE_SIZE_LIMIT.to_string());
         let s3_file_size_limit = s3_file_size_limit_string
             .parse()
-            .context("S3_FILE_SIZE_LIMIT needs to be signed integer value")?;
+            .context("S3_FILE_SIZE_LIMIT needs to be unsigned integer value")?;
+
+        let s3_total_size_limit_string =
+            env::var("S3_TOTAL_SIZE_LIMIT").unwrap_or(DEFAULT_S3_TOTAL_SIZE_LIMIT.to_string());
+        let s3_total_size_limit = s3_total_size_limit_string
+            .parse()
+            .context("S3_TOTAL_SIZE_LIMIT needs to be unsigned integer value")?;
 
         let web_port_string = env::var("WEB_PORT").unwrap_or(DEFAULT_WEB_PORT.to_string());
         let web_port = web_port_string
             .parse()
             .context("WEB_PORT needs to be unsigned integer value")?;
+
+        let reverse_proxy_ip_string =
+            env::var("REVERSE_PROXY_IP").unwrap_or(DEFAULT_REVERSE_PROXY_IP.to_string());
+        let reverse_proxy_ip = reverse_proxy_ip_string
+            .parse()
+            .context("REVERSE_PROXY_IP needs to be a valid IP address")?;
+
+        let ip_limit_string =
+            env::var("IP_LIMIT").unwrap_or(DEFAULT_IP_LIMIT_PER_SECOND.to_string());
+        let ip_limit_per_second = ip_limit_string
+            .parse()
+            .context("IP_LIMIT needs to be unsigned integer value")?;
+
+        let global_limit_string =
+            env::var("GLOBAL_LIMIT").unwrap_or(DEFAULT_GLOBAL_LIMIT_PER_SECOND.to_string());
+        let global_limit_per_second = global_limit_string
+            .parse()
+            .context("GLOBAL_LIMIT needs to be unsigned integer value")?;
 
         Ok(Self {
             database_url,
@@ -74,7 +109,11 @@ impl Config {
             s3_bucket_lifcycle_id,
             s3_bucket_expiration,
             s3_file_size_limit,
+            s3_total_size_limit,
             web_port,
+            reverse_proxy_ip,
+            ip_limit_per_second,
+            global_limit_per_second,
         })
     }
 
@@ -106,7 +145,23 @@ impl Config {
         self.s3_file_size_limit
     }
 
+    pub fn s3_total_size_limit(&self) -> usize {
+        self.s3_total_size_limit
+    }
+
     pub fn web_port(&self) -> u16 {
         self.web_port
+    }
+
+    pub fn reverse_proxy_ip(&self) -> IpAddr {
+        self.reverse_proxy_ip
+    }
+
+    pub fn ip_limit_per_second(&self) -> u32 {
+        self.ip_limit_per_second
+    }
+
+    pub fn global_limit_per_second(&self) -> u32 {
+        self.global_limit_per_second
     }
 }
