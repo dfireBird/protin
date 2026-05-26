@@ -1,14 +1,13 @@
 use std::io::Read;
 
-use actix_easy_multipart::{tempfile::Tempfile, MultipartForm};
+use actix_multipart::form::{MultipartForm, tempfile::TempFile};
 use actix_web::{
-    get, post,
+    Error, HttpResponse, get, post,
     web::{self, ServiceConfig},
-    Error, HttpResponse,
 };
 use log::error;
 
-use crate::{paste, AppState};
+use crate::{AppState, paste};
 
 pub fn pastes_config(cfg: &mut ServiceConfig) {
     cfg.service(get_paste_route);
@@ -17,7 +16,7 @@ pub fn pastes_config(cfg: &mut ServiceConfig) {
 
 #[derive(Debug, MultipartForm)]
 struct FileUpload {
-    file: Tempfile,
+    file: TempFile,
 }
 
 #[get("/paste/{paste_id}")]

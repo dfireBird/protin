@@ -1,8 +1,8 @@
 use std::{io, net::Ipv6Addr};
 
 use actix_cors::Cors;
-use actix_easy_multipart::MultipartFormConfig;
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_multipart::form::MultipartFormConfig;
+use actix_web::{App, HttpServer, middleware::Logger, web};
 use anyhow::Context;
 use log::info;
 

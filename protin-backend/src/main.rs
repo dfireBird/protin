@@ -2,7 +2,7 @@ use env_logger::Env;
 
 use protin::Config;
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     if dotenvy::from_path("../.env".to_string()).is_err() {
         eprintln!(".env file not found. Environment variables are assumed to be set.")

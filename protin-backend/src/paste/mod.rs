@@ -4,7 +4,7 @@ use actix_web::web;
 use anyhow::Context;
 use rand::seq::IteratorRandom;
 
-use crate::{models::Paste, s3, AppState};
+use crate::{AppState, models::Paste, s3};
 
 const KEY_LENGTH: u32 = 10;
 
