@@ -24,7 +24,6 @@ pub struct AppState {
     pool: db::DbPool,
     s3_client: s3::Client,
     s3_bucket_name: String,
-    s3_total_size_limit: usize,
 }
 
 pub async fn start_protin(config: Config) -> anyhow::Result<()> {
@@ -54,7 +53,6 @@ async fn create_server(pool: db::DbPool, s3_client: s3::Client, config: &Config)
         pool,
         s3_client,
         s3_bucket_name: config.s3_bucket_name(),
-        s3_total_size_limit: config.s3_total_size_limit(),
     };
 
     let reverse_proxy_ip = config.reverse_proxy_ip();

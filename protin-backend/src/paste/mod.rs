@@ -6,9 +6,9 @@ use rand::seq::IteratorRandom;
 
 use crate::{AppState, models::Paste, s3};
 
-const KEY_LENGTH: u32 = 10;
+const KEY_LENGTH: u32 = 20;
 
-const KEY_SPACE: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const KEY_SPACE: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
 
 /// create a random file name
 /// put the file data with file name into bucket
@@ -18,11 +18,10 @@ pub async fn create_paste(
     file_data: &[u8],
 ) -> anyhow::Result<Paste> {
     let key = generate_key(KEY_LENGTH);
-    let file_path = uuid::Uuid::new_v4();
     s3::put_file(
         &app_data.s3_client,
         &app_data.s3_bucket_name,
-        &file_path.to_string(),
+        &key,
         file_data.to_vec(),
     )
     .await?;
@@ -31,7 +30,7 @@ pub async fn create_paste(
             .pool
             .get()
             .context("Couldn't get a database connection from pool")?;
-        db::create_new_paste(&mut conn, key, file_path)
+        db::create_new_paste(&mut conn, key)
     })
     .await?
 }
@@ -51,13 +50,9 @@ pub async fn get_paste(
     .await??;
 
     if let Some(paste) = paste {
-        s3::get_file(
-            &data.s3_client,
-            &data.s3_bucket_name,
-            &paste.file_path.to_string(),
-        )
-        .await
-        .map(Some)
+        s3::get_file(&data.s3_client, &data.s3_bucket_name, &paste.id)
+            .await
+            .map(Some)
     } else {
         Ok(None)
     }

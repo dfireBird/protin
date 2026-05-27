@@ -6,8 +6,8 @@ use std::{
 
 use actix_governor::{KeyExtractor, SimpleKeyExtractionError};
 
-const IP_KEY_EXTRACT_ERROR_MESSAGE: &'static str = "Could not extract real IP address from request";
-const IP_KEY_PARSE_ERROR_MESSAGE: &'static str = "Could not parse real IP address from request";
+const IP_KEY_EXTRACT_ERROR_MESSAGE: &str = "Could not extract real IP address from request";
+const IP_KEY_PARSE_ERROR_MESSAGE: &str = "Could not parse real IP address from request";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RealIpKeyExtractor {
