@@ -1,6 +1,6 @@
 [package]
 name = "protin"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,16 +8,16 @@ edition = "2024"
 [dependencies]
 actix-cors = "0.7.1"
 actix-governor = "0.10.0"
-actix-multipart = "0.7.2"
-actix-web = "4.13.0"
-anyhow = "1.0.102"
-aws-config = { version = "1.8.15", features = ["behavior-version-latest"] }
-aws-sdk-s3 = "1.129.0"
-base64 = "0.22.1"
-diesel = { version = "2.3.7", features = ["postgres", "r2d2"] }
-diesel_migrations = { version = "2.3.1", features = ["postgres"] }
+actix-multipart = "0.8.0"
+actix-web = "4.15.0"
+anyhow = "1.0.104"
+aws-config = { version = "1.11.0", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.143.0"
+base64 = "0.23.1"
+diesel = { version = "2.3.12", features = ["postgres", "r2d2"] }
+diesel_migrations = { version = "2.3.2", features = ["postgres"] }
 dotenvy = "0.15.7"
-env_logger = "0.11.10"
-log = "0.4.29"
-rand = "0.10.1"
-serde = { version = "1.0.228", features = ["derive"] }
+env_logger = "0.11.11"
+log = "0.4.34"
+rand = "0.10.2"
+serde = { version = "1.0.229", features = ["derive"] }
