@@ -1,18 +1,22 @@
+mod headers;
+
 use std::io::Read;
 
 use actix_multipart::form::{MultipartForm, tempfile::TempFile};
-use actix_web::{Error, HttpResponse, get, post, web};
+use actix_web::{Error, HttpResponse, delete, get, post, web};
 use base64::{
     Engine as _,
     engine::general_purpose::{STANDARD as BASE64_STANDARD, URL_SAFE as BASE64_URL_SAFE},
 };
 use log::error;
 
+use self::headers::XApiKey;
 use crate::{AppState, paste};
 
 pub fn pastes_config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_paste_route);
     cfg.service(create_paste_route);
+    cfg.service(cleanup_expired_route);
 }
 
 #[derive(Debug, MultipartForm)]
@@ -67,4 +71,25 @@ async fn create_paste_route(
             Ok(HttpResponse::InternalServerError().body(format!("{}", err)))
         }
     }
+}
+
+#[delete("/cleanup")]
+async fn cleanup_expired_route(
+    data: web::Data<AppState>,
+    api_key: web::Header<XApiKey>,
+) -> Result<HttpResponse, Error> {
+    let Some(elevated_request_secret) = data.elevated_request_secret.as_ref() else {
+        return Ok(HttpResponse::Unauthorized().finish());
+    };
+
+    if *elevated_request_secret != api_key.0.0 {
+        return Ok(HttpResponse::Unauthorized().finish());
+    }
+
+    if let Err(err) = paste::cleanup_expired_paste(data.clone()).await {
+        error!("Error: {}", err);
+        return Ok(HttpResponse::InternalServerError().finish());
+    }
+
+    Ok(HttpResponse::Ok().finish())
 }

@@ -10,6 +10,7 @@ pub struct Paste {
     pub id: String,
     pub created_at: SystemTime,
     pub expires_at: SystemTime,
+    pub deleted: bool,
 }
 
 #[derive(Debug, Insertable)]

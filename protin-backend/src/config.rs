@@ -17,6 +17,8 @@ pub struct Config {
     reverse_proxy_ip: IpAddr,
     ip_limit_per_second: u32,
     global_limit_per_second: u32,
+
+    elevated_request_secret: Option<String>,
 }
 
 const MIB: usize = 1024 * 1024;
@@ -101,6 +103,8 @@ impl Config {
             .parse()
             .context("GLOBAL_LIMIT needs to be unsigned integer value")?;
 
+        let elevated_request_secret = env::var("ELEVATED_REQUEST_SECRET").ok();
+
         Ok(Self {
             database_url,
             s3_region,
@@ -114,6 +118,7 @@ impl Config {
             reverse_proxy_ip,
             ip_limit_per_second,
             global_limit_per_second,
+            elevated_request_secret,
         })
     }
 
@@ -163,5 +168,9 @@ impl Config {
 
     pub fn global_limit_per_second(&self) -> u32 {
         self.global_limit_per_second
+    }
+
+    pub fn elevated_request_secret(&self) -> Option<String> {
+        self.elevated_request_secret.clone()
     }
 }

@@ -58,6 +58,43 @@ pub async fn get_paste(
     }
 }
 
+pub async fn cleanup_expired_paste(app_data: web::Data<AppState>) -> anyhow::Result<()> {
+    let data = app_data.clone();
+    let expired_ids = web::block(move || {
+        let mut conn = app_data
+            .pool
+            .get()
+            .context("Couldn't get a database connection from pool")?;
+        db::get_expired_paste_ids(&mut conn)
+    })
+    .await??;
+
+    let (deleted_ids, error) =
+        s3::delete_files(&data.s3_client, &data.s3_bucket_name, expired_ids).await?;
+
+    let deleted_size = deleted_ids.len();
+    let updated_size = web::block(move || {
+        let mut conn = data
+            .pool
+            .get()
+            .context("Couldn't get a database connection from pool")?;
+        db::set_deleted_for_ids(&mut conn, deleted_ids)
+    })
+    .await??;
+
+    if let Some(error) = error {
+        Err(error)
+    } else if updated_size != deleted_size {
+        Err(anyhow::anyhow!(
+            "Update of deletion in table is partial {}/{}",
+            updated_size,
+            deleted_size
+        ))
+    } else {
+        Ok(())
+    }
+}
+
 fn generate_key(key_length: u32) -> String {
     let mut key = String::new();
 

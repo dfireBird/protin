@@ -3,10 +3,7 @@ use aws_config::{self, BehaviorVersion, Region};
 use aws_sdk_s3::{
     config,
     primitives::ByteStream,
-    types::{
-        BucketLifecycleConfiguration, ExpirationStatus, LifecycleExpiration, LifecycleRule,
-        LifecycleRuleFilter,
-    },
+    types::{Delete, ObjectIdentifier},
 };
 
 pub use aws_sdk_s3::Client;
@@ -24,7 +21,6 @@ pub async fn create_client(app_config: &Config) -> anyhow::Result<Client> {
         .build();
     let client = Client::from_conf(config);
     create_bucket_if_not_exists(&client, app_config).await?;
-    create_lifecycle_if_not_exists(&client, app_config).await?;
     Ok(client)
 }
 
@@ -62,13 +58,13 @@ async fn create_bucket_if_not_exists(client: &Client, app_config: &Config) -> an
 pub async fn put_file(
     client: &Client,
     s3_bucket_name: &str,
-    file_path: &str,
+    file_key: &str,
     file_data: Vec<u8>,
 ) -> anyhow::Result<()> {
     client
         .put_object()
         .bucket(s3_bucket_name)
-        .key(file_path)
+        .key(file_key)
         .body(ByteStream::from(file_data))
         .send()
         .await
@@ -82,12 +78,12 @@ pub async fn put_file(
 pub async fn get_file(
     client: &Client,
     s3_bucket_name: &str,
-    file_path: &str,
+    file_key: &str,
 ) -> anyhow::Result<Vec<u8>> {
     let resp = client
         .get_object()
         .bucket(s3_bucket_name)
-        .key(file_path)
+        .key(file_key)
         .send()
         .await
         .context(format!(
@@ -102,56 +98,67 @@ pub async fn get_file(
         .to_vec())
 }
 
-async fn create_lifecycle_if_not_exists(
+pub async fn delete_files(
     client: &Client,
-    app_config: &Config,
-) -> anyhow::Result<()> {
-    let resp = client
-        .get_bucket_lifecycle_configuration()
-        .bucket(app_config.s3_bucket_name())
-        .send()
-        .await;
-    // NOTE: MinIO returns an error if there are no lifecycle present, so handling it as no rules
-    let rules = resp.map(|r| r.rules).unwrap_or_default();
+    s3_bucket_name: &str,
+    file_keys: Vec<String>,
+) -> anyhow::Result<(Vec<String>, Option<anyhow::Error>)> {
+    let obj_ids_iter = file_keys
+        .iter()
+        .map(|k| (k, ObjectIdentifier::builder().key(k).build()));
 
-    if let Some(rules) = rules {
-        let is_rule_listed = rules
-            .iter()
-            .map(|r| r.id().unwrap_or(""))
-            .any(|id| id == app_config.s3_bucket_lifcycle_id());
-        if is_rule_listed {
-            return Ok(());
-        }
+    let mut ok_ids = Vec::new();
+    let mut err_ids = Vec::new();
+    obj_ids_iter.for_each(|(k, o)| match o {
+        Ok(obj_id) => ok_ids.push(obj_id),
+        Err(err) => err_ids.push(anyhow::anyhow!(
+            "Error while building delete request for file {}: {}",
+            k,
+            err
+        )),
+    });
+
+    if err_ids.len() > 0 {
+        let err_message: Vec<_> = err_ids.iter().map(|err| format!("{err}")).collect();
+        let err_message = err_message.join("\n");
+        return Err(anyhow::anyhow!("{}", err_message));
     }
-    let bucket_lifecycle_rule = BucketLifecycleConfiguration::builder()
-        .rules(
-            LifecycleRule::builder()
-                .status(ExpirationStatus::Enabled)
-                .filter(LifecycleRuleFilter::builder().prefix("").build())
-                .id(app_config.s3_bucket_lifcycle_id())
-                .expiration(
-                    LifecycleExpiration::builder()
-                        .days(app_config.s3_bucket_expiration())
-                        .build(),
-                )
-                .build()
-                .context("Can't build lifecycle rule".to_string())?,
-        )
-        .build()
-        .context(format!(
-            "Can't build Bucket Lifecycle Configuration: {}",
-            app_config.s3_bucket_name()
-        ))?;
 
-    client
-        .put_bucket_lifecycle_configuration()
-        .bucket(app_config.s3_bucket_name())
-        .lifecycle_configuration(bucket_lifecycle_rule)
+    let delete = Delete::builder()
+        .set_objects(Some(ok_ids))
+        .build()
+        .context("while building delete request")?;
+
+    let resp = client
+        .delete_objects()
+        .bucket(s3_bucket_name)
+        .delete(delete)
         .send()
         .await
-        .context(format!(
-            "Can't set lifecycle rules for the bucket: {}",
-            app_config.s3_bucket_name()
-        ))?;
-    Ok(())
+        .context("while sending the DeleteObjects request")?;
+
+    let deleted_ids = resp
+        .deleted()
+        .iter()
+        .filter_map(|obj| obj.key())
+        .map(|s| s.to_string())
+        .collect();
+
+    let mut errors = None;
+    if let Some(errs) = resp.errors {
+        let err: Vec<_> = errs
+            .into_iter()
+            .map(|e| {
+                format!(
+                    "Error while deleting file {}: {}({})",
+                    e.key().unwrap_or_default(),
+                    e.message().unwrap_or_default(),
+                    e.code().unwrap_or_default(),
+                )
+            })
+            .collect();
+        errors = Some(anyhow::anyhow!("{}", err.join("\n")));
+    }
+
+    Ok((deleted_ids, errors))
 }

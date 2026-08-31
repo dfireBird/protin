@@ -5,5 +5,6 @@ diesel::table! {
         id -> Text,
         created_at -> Timestamp,
         expires_at -> Timestamp,
+        deleted -> Bool,
     }
 }
