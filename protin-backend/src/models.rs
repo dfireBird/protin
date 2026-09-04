@@ -17,4 +17,5 @@ pub struct Paste {
 #[diesel(table_name = pastes)]
 pub struct NewPaste {
     pub id: String,
+    pub expires_at: Option<SystemTime>,
 }

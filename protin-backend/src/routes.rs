@@ -2,7 +2,7 @@ mod headers;
 
 use std::io::Read;
 
-use actix_multipart::form::{MultipartForm, tempfile::TempFile};
+use actix_multipart::form::{MultipartForm, tempfile::TempFile, text::Text};
 use actix_web::{Error, HttpResponse, delete, get, post, web};
 use base64::{
     Engine as _,
@@ -22,6 +22,7 @@ pub fn pastes_config(cfg: &mut web::ServiceConfig) {
 #[derive(Debug, MultipartForm)]
 struct FileUpload {
     file: TempFile,
+    expires_at: Option<Text<u64>>,
 }
 
 #[get("/paste/{paste_id}")]
@@ -45,6 +46,7 @@ async fn create_paste_route(
     data: web::Data<AppState>,
     file_upload: MultipartForm<FileUpload>,
 ) -> Result<HttpResponse, Error> {
+    let file_upload = file_upload.into_inner();
     let mut file_data = Vec::new();
     let mut file = file_upload.file.file.as_file();
     if let Err(err) = file.read_to_end(&mut file_data) {
@@ -64,7 +66,8 @@ async fn create_paste_route(
         return Ok(HttpResponse::BadRequest().body("File content appears to be Base64 encoded. Upload of Base64 encoded files are not allowed"));
     }
 
-    match paste::create_paste(data.clone(), file_data.as_bytes()).await {
+    let expires_at = file_upload.expires_at.map(Text::into_inner);
+    match paste::create_paste(data.clone(), file_data.as_bytes(), expires_at).await {
         Ok(paste) => Ok(HttpResponse::Ok().json(paste)),
         Err(err) => {
             error!("Error: {:#}", err);
@@ -87,7 +90,7 @@ async fn cleanup_expired_route(
     }
 
     if let Err(err) = paste::cleanup_expired_paste(data.clone()).await {
-        error!("Error: {}", err);
+        error!("Error: {:#}", err);
         return Ok(HttpResponse::InternalServerError().finish());
     }
 

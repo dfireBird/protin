@@ -1,15 +1,22 @@
 use std::cmp;
+use std::time::{Duration, SystemTime};
 
 use anyhow::Context;
-use diesel::dsl;
-use diesel::prelude::*;
+use diesel::{dsl, prelude::*};
 
 use crate::models::{NewPaste, Paste};
 
-pub fn create_new_paste(conn: &mut PgConnection, id: String) -> anyhow::Result<Paste> {
+pub fn create_new_paste(
+    conn: &mut PgConnection,
+    id: String,
+    expires_at: Option<u64>,
+) -> anyhow::Result<Paste> {
     use crate::schema::pastes;
 
-    let new_paste = NewPaste { id };
+    let expires_at = expires_at
+        .map(|raw_timestamp| SystemTime::UNIX_EPOCH.checked_add(Duration::from_secs(raw_timestamp)))
+        .flatten();
+    let new_paste = NewPaste { id, expires_at };
 
     diesel::insert_into(pastes::table)
         .values(new_paste)

@@ -16,6 +16,7 @@ const KEY_SPACE: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 pub async fn create_paste(
     app_data: web::Data<AppState>,
     file_data: &[u8],
+    expires_at: Option<u64>,
 ) -> anyhow::Result<Paste> {
     let key = generate_key(KEY_LENGTH);
     s3::put_file(
@@ -30,7 +31,7 @@ pub async fn create_paste(
             .pool
             .get()
             .context("Couldn't get a database connection from pool")?;
-        db::create_new_paste(&mut conn, key)
+        db::create_new_paste(&mut conn, key, expires_at)
     })
     .await?
 }
