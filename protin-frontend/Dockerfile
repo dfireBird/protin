@@ -14,4 +14,7 @@ COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
 RUN pnpm run build
 
-
+FROM nginx:1.31.5
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=build-env /app/build/client /usr/share/nginx/html
+EXPOSE 80
