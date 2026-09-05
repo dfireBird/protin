@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -9,10 +10,10 @@ import {
 
 import type { Route } from "./+types/root";
 import { Header } from "./components/header";
+import { Loader } from "./components/loader";
 import { ToolbarProvider, useToolbar } from "./providers/toolbar";
 
 import "./app.css";
-import { useEffect } from "react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -56,6 +57,10 @@ export default function App() {
   return <Outlet />;
 }
 
+export function HydrateFallback() {
+  return <Loader />
+}
+
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
@@ -78,8 +83,8 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
+    <main className="pt-16 p-4 container mx-auto max-w-fit">
+      <h1 className="text-9xl">{message}</h1>
       <p>{details}</p>
       {stack && (
         <pre className="w-full p-4 overflow-x-auto">
