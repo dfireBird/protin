@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { data, useNavigate } from "react-router";
 
 import { LineNum } from "~/components/linenum";
 import { useToolbar } from "~/providers/toolbar";
@@ -22,19 +22,17 @@ export async function clientLoader({
   if (resp.ok) {
     const content = await resp.text();
     return { content };
-  }
-  {
-    // fixme: handle errors from resp
-    return { error: "Error" };
+  } else {
+    throw data({
+      error: await resp.text(),
+    }, {
+      status: 404,
+      statusText: "Request Paste is not found"
+    })
   }
 }
 
 export default function Paste({ loaderData }: Route.ComponentProps) {
-  if (loaderData.error) {
-    // handle errors
-    return;
-  }
-
   const navigate = useNavigate();
   const { setToolbarState } = useToolbar();
 

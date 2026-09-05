@@ -5,6 +5,7 @@ type SetToolbarState = React.Dispatch<React.SetStateAction<ToolbarState>>;
 
 type ToolbarState =
   | { state: "loading" }
+  | { state: "error" }
   | { state: "new"; action: OnClickHandler }
   | { state: "save"; action: OnClickHandler };
 

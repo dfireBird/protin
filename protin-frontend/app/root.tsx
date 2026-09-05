@@ -9,9 +9,10 @@ import {
 
 import type { Route } from "./+types/root";
 import { Header } from "./components/header";
-import { ToolbarProvider } from "./providers/toolbar";
+import { ToolbarProvider, useToolbar } from "./providers/toolbar";
 
 import "./app.css";
+import { useEffect } from "react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -60,11 +61,16 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
 
+  const { setToolbarState } = useToolbar();
+  useEffect(() => {
+    setToolbarState({ state: "error" });
+  }, []);
+
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Error";
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? "The requested post is not found."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
