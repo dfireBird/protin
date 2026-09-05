@@ -1,6 +1,6 @@
-export const Loader = ({ size = 5 }: { size?: number }) => (
+export const Loader = () => (
   <svg
-    className={`mx-1 size-${size} animate-spin`}
+    className={`mx-1 size-5 animate-spin`}
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"

@@ -13,7 +13,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({
+export async function clientLoader({
   params: { pasteId },
   request,
 }: Route.LoaderArgs) {
