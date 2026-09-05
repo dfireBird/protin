@@ -84,7 +84,7 @@ export default function Editor({}: Route.ComponentProps) {
 
   return (
     <main className="flex-auto flex font-mono">
-      <div className="line min-w-11 p-2 border-r-1 border-border/40 text-md font-medium">
+      <div className="line min-w-11 p-2 border-r border-border/40 text-md font-medium">
         <LineNum content={content} />
       </div>
       <textarea

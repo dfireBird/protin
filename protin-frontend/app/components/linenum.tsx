@@ -8,7 +8,7 @@ export function LineNum({ content }: { content: string }) {
     <>
       {Array.from({ length: numLines }).map((_, idx) => (
         <React.Fragment key={`line-${idx + 1}`}>
-          <span>{idx + 1}</span>
+          <span className="font-mono">{idx + 1}</span>
           <br />
         </React.Fragment>
       ))}
