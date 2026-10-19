@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { data, useNavigate } from "react-router";
+import hljs from "highlight.js";
 
 import { LineNum } from "~/components/linenum";
 import { useToolbar } from "~/providers/toolbar";
@@ -46,13 +47,15 @@ export default function Paste({ loaderData }: Route.ComponentProps) {
   }, []);
 
   const content = loaderData.content;
+  const hightlightCode = hljs.highlightAuto(content);
+
   return (
     <main className="flex-auto flex font-mono">
       <div className="line min-w-11 p-2 border-r border-border/40 text-md font-medium">
         <LineNum content={content} />
       </div>
       <pre className="font-mono h-full p-2 pb-0 flex-auto text-md font-medium">
-        <code>{content}</code>
+        <code className="hljs" dangerouslySetInnerHTML={{__html: hightlightCode.value}}></code>
       </pre>
     </main>
   );
