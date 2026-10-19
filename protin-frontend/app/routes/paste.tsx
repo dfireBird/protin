@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { data, useNavigate } from "react-router";
 import hljs from "highlight.js";
 
@@ -24,29 +24,48 @@ export async function clientLoader({
     const content = await resp.text();
     return { content };
   } else {
-    throw data({
-      error: await resp.text(),
-    }, {
-      status: 404,
-      statusText: "Request Paste is not found"
-    })
+    throw data(
+      {
+        error: await resp.text(),
+      },
+      {
+        status: 404,
+        statusText: "Request Paste is not found",
+      },
+    );
   }
 }
 
 export default function Paste({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const { setToolbarState } = useToolbar();
+  const content = loaderData.content;
 
   const onClickHandler = () => {
     setToolbarState({ state: "loading" });
     navigate("/");
   };
 
+  const copyContent = useCallback(
+    () =>
+      navigator.clipboard.writeText(content).then(() => {
+        setToolbarState((prev) => ({ ...prev, copyState: "success" }));
+        setTimeout(() =>
+          setToolbarState((prev) => ({ ...prev, copyState: undefined })),
+          1000,
+        );
+      }),
+    [content],
+  );
+
   useEffect(() => {
-    setToolbarState({ state: "new", action: onClickHandler });
+    setToolbarState({
+      state: "new",
+      action: onClickHandler,
+      copyAction: copyContent,
+    });
   }, []);
 
-  const content = loaderData.content;
   const hightlightCode = hljs.highlightAuto(content);
 
   return (
@@ -55,7 +74,10 @@ export default function Paste({ loaderData }: Route.ComponentProps) {
         <LineNum content={content} />
       </div>
       <pre className="font-mono h-full p-2 pb-0 flex-auto text-md font-medium">
-        <code className="hljs" dangerouslySetInnerHTML={{__html: hightlightCode.value}}></code>
+        <code
+          className="hljs"
+          dangerouslySetInnerHTML={{ __html: hightlightCode.value }}
+        ></code>
       </pre>
     </main>
   );

@@ -6,8 +6,9 @@
     --background: #1d2021;
     --primary: #eab686;
     --primary-hover: #e09752;
-    --secondary: #375110;
-    --accent: #49da25;
+    --secondary: #83a598;
+    --secondary-hover: #73b59c;
+    --accent: #b8bb26;
 
     @import "highlight.js/styles/base16/gruvbox-dark-hard.css";
   }
@@ -17,8 +18,9 @@
     --background: #f9f5d7;
     --primary: #794615;
     --primary-hover: #ad641f;
-    --secondary: #d5efae;
-    --accent: #49da25;
+    --secondary: #076678;
+    --secondary-hover: #0a95b0;
+    --accent: #79740e;
     
     @import "highlight.js/styles/base16/gruvbox-light-hard.css";
   }
@@ -35,6 +37,7 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
   --color-accent: var(--accent);
   --color-border: var(--text);
 }

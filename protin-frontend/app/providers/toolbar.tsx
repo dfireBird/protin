@@ -3,11 +3,13 @@ import { createContext, useContext, useState } from "react";
 type OnClickHandler = React.MouseEventHandler<HTMLButtonElement>;
 type SetToolbarState = React.Dispatch<React.SetStateAction<ToolbarState>>;
 
-type ToolbarState =
+type ToolbarRawState =
   | { state: "loading" }
   | { state: "error" }
   | { state: "new"; action: OnClickHandler }
   | { state: "save"; action: OnClickHandler };
+
+type ToolbarState = ToolbarRawState & { copyState?: "success", copyAction?: OnClickHandler };
 
 type TToolbarContext = {
   toolbarState: ToolbarState;
